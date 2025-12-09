@@ -1,0 +1,1112 @@
+<html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小熊与金色树叶</title>
+    <!-- Tailwind CSS v3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- GSAP 动画库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#8B4513',
+                        secondary: '#DAA520',
+                        accent: '#FF6347',
+                        background: '#F5F5DC',
+                        text: '#333333'
+                    },
+                    fontFamily: {
+                        sans: ['Arial', 'sans-serif'],
+                    },
+                    animation: {
+                        'float': 'float 3s ease-in-out infinite',
+                        'wiggle': 'wiggle 1s ease-in-out infinite',
+                        'bounce-slow': 'bounce 2s infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        wiggle: {
+                            '0%, 100%': { transform: 'rotate(-3deg)' },
+                            '50%': { transform: 'rotate(3deg)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-shadow {
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            }
+            .leaf-shadow {
+                filter: drop-shadow(3px 3px 2px rgba(0, 0, 0, 0.3));
+            }
+            .speech-bubble {
+                position: relative;
+                background: #ffffff;
+                border-radius: 1em;
+                padding: 10px 15px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            }
+            .speech-bubble:after {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 50%;
+                width: 0;
+                height: 0;
+                border: 20px solid transparent;
+                border-right-color: #ffffff;
+                border-left: 0;
+                margin-top: -20px;
+                margin-left: -20px;
+            }
+            .speech-bubble-right:after {
+                left: auto;
+                right: 0;
+                border-right-color: transparent;
+                border-left-color: #ffffff;
+                margin-left: 0;
+                margin-right: -20px;
+            }
+            .progress-bar {
+                transition: width 0.5s ease-in-out;
+            }
+            .draggable {
+                cursor: grab;
+                user-select: none;
+            }
+            .draggable:active {
+                cursor: grabbing;
+            }
+        }
+    </style>
+</head>
+<body class="bg-background min-h-screen flex flex-col items-center justify-start p-2 overflow-x-hidden">
+    <div class="relative w-full max-w-4xl h-[60vh] sm:h-[65vh] md:h-[70vh] bg-blue-50 rounded-3xl shadow-lg overflow-hidden">
+        <!-- 天空背景 -->
+        <div class="absolute top-0 left-0 w-full h-3/4 bg-gradient-to-b from-blue-300 to-blue-100"></div>
+        
+        <!-- 地面 -->
+        <div class="absolute bottom-0 left-0 w-full h-1/4 bg-gradient-to-t from-green-700 to-green-600"></div>
+        
+        <!-- 云朵 -->
+        <div class="absolute top-5 left-5 w-16 h-8 bg-white rounded-full opacity-80 animate-float"></div>
+        <div class="absolute top-10 left-10 w-20 h-10 bg-white rounded-full opacity-80 animate-float" style="animation-delay: 1s;"></div>
+        <div class="absolute top-8 right-10 w-16 h-8 bg-white rounded-full opacity-80 animate-float" style="animation-delay: 0.5s;"></div>
+        
+        <!-- 红豆角色 -->
+        <div id="redBean" class="absolute top-[10%] left-[5%] flex flex-col items-center z-10">
+            <div class="relative">
+                <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/e53c3174d9ff4f8eb1bffc97fb696951~tplv-a9rns2rl98-image.image?rcl=2025120912490129E4CBA13E56D41EB3EA&amp;rk3s=8e244e95&amp;rrcfp=f06b921b&amp;x-expires=1767847761&amp;x-signature=yx%2F63Noa4I46IrRRBJmE%2BsQQrbw%3D" alt="红豆" class="w-16 h-16 sm:w-24 sm:h-24 object-contain animate-float">
+            </div>
+            <div id="redBeanSpeech" class="speech-bubble mt-1 max-w-[150px] text-xs sm:text-sm font-medium text-text">
+                你比我的所有女朋友都有韵味
+            </div>
+        </div>
+        
+        <!-- 小熊角色 -->
+        <div id="bear" class="absolute bottom-[20%] left-[30%] sm:left-[40%] flex flex-col items-center z-20">
+            <div class="relative">
+                <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/code_assistant/f0bcf6b672a04645b68ba484da1047ba~tplv-a9rns2rl98-image.image?rcl=20251209125716587A9A16B44C3584FFBC&amp;rk3s=8e244e95&amp;rrcfp=2609e108&amp;x-expires=1765861040&amp;x-signature=4YS1sCExoNDmOT8Q5zfqNcEf2ck%3D" alt="小熊" class="w-24 h-24 sm:w-32 sm:h-32 object-contain">
+                <div id="bearMouth" class="absolute top-[45%] left-[50%] w-6 h-6 sm:w-8 sm:h-8 transform -translate-x-1/2 -translate-y-1/2 rounded-full bg-pink-300 z-10"></div>
+            </div>
+            <div id="bearSpeech" class="speech-bubble speech-bubble-right mt-1 max-w-[150px] text-xs sm:text-sm font-medium text-text hidden">
+                太棒了，我太爱吃金色树叶了！
+            </div>
+            
+            <!-- 饱腹度条 -->
+            <div class="mt-3 w-32 sm:w-40 bg-gray-200 rounded-full h-3 sm:h-4 overflow-hidden">
+                <div id="hungerBar" class="bg-secondary h-full progress-bar" style="width: 0%"></div>
+            </div>
+            <div class="text-xs mt-1 text-text">饱腹度: <span id="hungerText">0%</span></div>
+        </div>
+        
+        <!-- 金叶树 -->
+        <div id="tree" class="absolute bottom-[20%] right-[2%] flex flex-col items-center z-10">
+            <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/a5765ece5a714eee9617394fcc31cfb4~tplv-a9rns2rl98-image.image?rcl=2025120912490129E4CBA13E56D41EB3EA&amp;rk3s=8e244e95&amp;rrcfp=f06b921b&amp;x-expires=1767847768&amp;x-signature=FqhaaTVe6ZD5n3wc59uGvDKlnR0%3D" alt="金叶树" class="w-28 h-44 sm:w-48 sm:h-64 object-contain">
+            
+            <!-- 金树叶容器 -->
+            <div id="leavesContainer" class="absolute top-[10%] left-[20%] w-[60%] h-[60%]">
+                <!-- 金树叶将通过JS动态生成 -->
+            </div>
+        </div>
+        
+        <!-- 豆浆机 -->
+        <div id="soybeanMilkMaker" class="absolute bottom-[20%] left-[15%] sm:left-[20%] flex flex-col items-center z-10 cursor-pointer">
+            <div class="relative">
+                <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/140215b6bd2a46489a5879a0e615b91d~tplv-a9rns2rl98-image.image?rcl=202512091341023EE60F5E53E9262CC8DE&rk3s=8e244e95&rrcfp=f06b921b&x-expires=1767850873&x-signature=AW6PEwoghURoSF3UToc4OYirk9o%3D" 
+                     alt="豆浆机" class="w-20 h-24 sm:w-28 sm:h-32 object-contain animate-float">
+                <div id="milkSpeech" class="speech-bubble speech-bubble-right mt-1 max-w-[120px] text-[10px] sm:text-xs font-medium text-text hidden">
+                    来喝杯温暖的豆浆吧！
+                </div>
+            </div>
+            <!-- 豆浆冷却进度条 -->
+            <div id="milkCooldownBarContainer" class="mt-2 w-16 sm:w-24 bg-gray-200 rounded-full h-2 sm:h-3 overflow-hidden hidden">
+                <div id="milkCooldownBar" class="bg-blue-400 h-full" style="width: 100%"></div>
+            </div>
+        </div>
+        
+        <!-- 游戏标题 -->
+        <div class="absolute top-2 left-1/2 transform -translate-x-1/2 text-center">
+            <h1 class="text-xl sm:text-3xl font-bold text-primary text-shadow">小熊与金色树叶</h1>
+            <p class="text-xs sm:text-sm text-text mt-1">拖动金色树叶到小熊嘴里，让它吃饱吧！</p>
+        </div>
+        
+        <!-- 重新开始按钮 -->
+        <button id="restartButton" class="absolute top-2 right-2 bg-accent hover:bg-red-600 text-white font-bold py-1 px-2 sm:py-2 sm:px-4 rounded-full transition-colors duration-300 text-xs sm:text-sm">
+            <i class="fa fa-refresh mr-1"></i> <span class="hidden sm:inline">重新开始</span>
+        </button>
+    </div>
+    
+    <!-- 对话框 -->
+    <div id="dialogBox" class="w-full max-w-4xl mt-3 bg-white rounded-xl shadow-lg p-4 min-h-[100px] max-h-[200px] sm:max-h-[250px] flex flex-col">
+        <div class="flex items-center justify-between mb-2">
+            <h3 class="text-lg font-bold text-primary">对话</h3>
+            <button id="closeDialog" class="text-gray-500 hover:text-gray-700">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <div id="dialogContent" class="flex-1 overflow-y-auto pr-2 text-sm" style="scrollbar-width: thin; scrollbar-color: #DAA520 #f1f1f1;">
+            <p class="text-text">红豆：你比我的所有女朋友都有韵味！</p>
+            <p class="text-text mt-2">小熊：我太爱吃金色树叶了！</p>
+        </div>
+        <div class="mt-3 flex justify-end">
+            <button id="addDialog" class="bg-secondary hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300">
+                <i class="fa fa-plus mr-1"></i> 添加对话
+            </button>
+        </div>
+    </div>
+    
+    <!-- 导航栏 -->
+    <nav class="w-full max-w-4xl mt-3 bg-primary rounded-xl shadow-lg p-2 flex flex-wrap justify-between items-center">
+        <div class="flex space-x-2 sm:space-x-4 mb-2 sm:mb-0">
+            <button id="navRestart" class="bg-accent hover:bg-red-600 text-white font-bold py-1 px-2 sm:py-2 sm:px-4 rounded-lg transition-colors duration-300 text-xs sm:text-sm">
+                <i class="fa fa-refresh mr-1"></i> <span class="hidden sm:inline">重新开始</span>
+            </button>
+            <button id="navHelp" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-2 sm:py-2 sm:px-4 rounded-lg transition-colors duration-300 text-xs sm:text-sm">
+                <i class="fa fa-question-circle mr-1"></i> <span class="hidden sm:inline">帮助</span>
+            </button>
+            <button id="navTrash" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1 px-2 sm:py-2 sm:px-4 rounded-lg transition-colors duration-300 text-xs sm:text-sm">
+                <i class="fa fa-trash mr-1"></i> <span class="hidden sm:inline">扔垃圾</span>
+            </button>
+        </div>
+        <div class="flex space-x-2 sm:space-x-4">
+            <button id="navSettings" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-1 px-2 sm:py-2 sm:px-4 rounded-lg transition-colors duration-300 text-xs sm:text-sm">
+                <i class="fa fa-cog mr-1"></i> <span class="hidden sm:inline">设置</span>
+            </button>
+            <button id="navAbout" class="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-2 sm:py-2 sm:px-4 rounded-lg transition-colors duration-300 text-xs sm:text-sm">
+                <i class="fa fa-info-circle mr-1"></i> <span class="hidden sm:inline">关于</span>
+            </button>
+        </div>
+    </nav>
+    
+    <!-- 帮助弹窗 -->
+    <div id="helpModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-primary">游戏帮助</h3>
+                <button id="closeHelp" class="text-gray-500 hover:text-gray-700">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-3">
+                <p><i class="fa fa-hand-pointer-o text-secondary mr-2"></i> 拖动金色树叶到小熊嘴里</p>
+                <p><i class="fa fa-cutlery text-secondary mr-2"></i> 填满饱腹度条让小熊吃饱</p>
+                <p><i class="fa fa-comments text-secondary mr-2"></i> 观察红豆和小熊的有趣对话</p>
+                <p><i class="fa fa-trash text-secondary mr-2"></i> 点击扔垃圾按钮，然后拖到地上</p>
+                <p><i class="fa fa-refresh text-secondary mr-2"></i> 点击重新开始可以重置游戏</p>
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button id="gotIt" class="bg-secondary hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300">
+                    知道了
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 设置弹窗 -->
+    <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-primary">游戏设置</h3>
+                <button id="closeSettings" class="text-gray-500 hover:text-gray-700">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-text mb-2">音效音量</label>
+                    <input type="range" id="soundVolume" min="0" max="100" value="50" class="w-full">
+                </div>
+                <div>
+                    <label class="block text-text mb-2">动画速度</label>
+                    <select id="animationSpeed" class="w-full p-2 border rounded">
+                        <option value="slow">慢速</option>
+                        <option value="normal" selected>正常</option>
+                        <option value="fast">快速</option>
+                    </select>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="showSpeech" checked class="mr-2">
+                    <label for="showSpeech">显示对话气泡</label>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button id="saveSettings" class="bg-secondary hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300">
+                    保存设置
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 关于弹窗 -->
+    <div id="aboutModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-primary">关于游戏</h3>
+                <button id="closeAbout" class="text-gray-500 hover:text-gray-700">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="text-center mb-4">
+                <h2 class="text-2xl font-bold text-primary">小熊与金色树叶</h2>
+                <p class="text-gray-500 mt-1">版本 1.0.0</p>
+            </div>
+            <p class="text-text text-center">这是一个简单有趣的休闲游戏，你需要帮助小熊吃到足够的金色树叶。</p>
+            <div class="mt-6 flex justify-center">
+                <button id="closeAboutBtn" class="bg-secondary hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300">
+                    关闭
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 游戏状态
+        const gameState = {
+            hunger: 0,
+            maxHunger: 100,
+            leaves: [],
+            trashItems: [],
+            isFull: false,
+            lastMilkTime: 0,
+            milkCooldown: 3000, // 3秒冷却时间
+            clickCount: 0,
+            cooldownInterval: null,
+            isCleaning: false
+        };
+        
+        // 小熊对话内容
+        const bearDialogues = [
+            "我是729森林的皇帝！",
+            "我是世界上最有韵味的熊！",
+            "我就是有病！",
+            "金色树叶是我的最爱！",
+            "你想和我做朋友吗？",
+            "今天天气真好！",
+            "我喜欢在森林里散步。"
+        ];
+        
+        // DOM元素
+        const bearMouth = document.getElementById('bearMouth');
+        const hungerBar = document.getElementById('hungerBar');
+        const hungerText = document.getElementById('hungerText');
+        const bearSpeech = document.getElementById('bearSpeech');
+        const leavesContainer = document.getElementById('leavesContainer');
+        const restartButton = document.getElementById('restartButton');
+        const bearElement = document.getElementById('bear');
+        const milkCooldownBarContainer = document.getElementById('milkCooldownBarContainer');
+        const milkCooldownBar = document.getElementById('milkCooldownBar');
+        const gameArea = document.querySelector('.relative.w-full.max-w-4xl');
+        
+        // 创建金树叶
+        function createLeaves(count = 10) {
+            leavesContainer.innerHTML = '';
+            gameState.leaves = [];
+            
+            for (let i = 0; i < count; i++) {
+                const leaf = document.createElement('img');
+                leaf.src = 'https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/4a53b1750a6546a7957abc6377383fdd~tplv-a9rns2rl98-image.image?rcl=2025120912490129E4CBA13E56D41EB3EA&rk3s=8e244e95&rrcfp=f06b921b&x-expires=1767847774&x-signature=CjReIcX2w58CsDPJsA5xLmgWRfA%3D';
+                leaf.alt = '金色树叶';
+                leaf.className = 'absolute draggable leaf-shadow';
+                // 根据屏幕宽度调整树叶大小
+                const isMobile = window.innerWidth < 640;
+                const leafSize = isMobile ? '30px' : '40px';
+                leaf.style.width = leafSize;
+                leaf.style.height = leafSize;
+                
+                // 随机位置
+                const x = Math.random() * (leavesContainer.offsetWidth - (isMobile ? 30 : 40));
+                const y = Math.random() * (leavesContainer.offsetHeight - (isMobile ? 30 : 40));
+                leaf.style.left = `${x}px`;
+                leaf.style.top = `${y}px`;
+                
+                // 随机旋转
+                const rotation = Math.random() * 360;
+                leaf.style.transform = `rotate(${rotation}deg)`;
+                
+                // 添加拖拽功能
+                makeDraggable(leaf);
+                
+                leavesContainer.appendChild(leaf);
+                gameState.leaves.push(leaf);
+            }
+        }
+        
+        // 使元素可拖拽
+        function makeDraggable(element) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            let startX, startY;
+            let originalX, originalY;
+            let isDragging = false;
+            
+            element.onmousedown = dragMouseDown;
+            element.ontouchstart = dragTouchStart;
+            
+            function dragMouseDown(e) {
+                e.preventDefault();
+                startDrag(e.clientX, e.clientY);
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+            
+            function dragTouchStart(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                startDrag(touch.clientX, touch.clientY);
+                document.ontouchend = closeDragElement;
+                document.ontouchmove = elementTouchDrag;
+            }
+            
+            function startDrag(x, y) {
+                startX = x;
+                startY = y;
+                originalX = element.offsetLeft;
+                originalY = element.offsetTop;
+                isDragging = true;
+                
+                // 开始拖拽动画
+                gsap.to(element, {
+                    scale: 1.2,
+                    duration: 0.2
+                });
+            }
+            
+            function elementDrag(e) {
+                e.preventDefault();
+                moveElement(e.clientX, e.clientY);
+            }
+            
+            function elementTouchDrag(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                moveElement(touch.clientX, touch.clientY);
+            }
+            
+            function moveElement(x, y) {
+                if (!isDragging) return;
+                
+                pos1 = startX - x;
+                pos2 = startY - y;
+                startX = x;
+                startY = y;
+                
+                // 计算新位置
+                const newLeft = element.offsetLeft - pos1;
+                const newTop = element.offsetTop - pos2;
+                
+                // 设置新位置
+                element.style.left = newLeft + "px";
+                element.style.top = newTop + "px";
+                
+                // 检查是否是树叶并拖到熊嘴
+                if (element.src.includes('4a53b1750a6546a7957abc6377383fdd')) {
+                    checkCollision(element);
+                }
+            }
+            
+            function closeDragElement() {
+                if (!isDragging) return;
+                
+                // 停止移动
+                document.onmouseup = null;
+                document.onmousemove = null;
+                document.ontouchend = null;
+                document.ontouchmove = null;
+                
+                // 检查是否需要返回原位
+                if (isDragging) {
+                    // 检查是否是树叶并拖到熊嘴
+                    if (element.src.includes('4a53b1750a6546a7957abc6377383fdd')) {
+                        if (!checkCollision(element)) {
+                            // 如果没有拖到熊嘴，返回原位
+                            gsap.to(element, {
+                                left: originalX,
+                                top: originalY,
+                                scale: 1,
+                                duration: 0.3,
+                                ease: "back.out(1.7)"
+                            });
+                        }
+                    } 
+                    // 检查是否是垃圾并拖到地面
+                    else if (element.src.includes('fa96dc3f48ba414e9fb6b5a8469b9a30')) {
+                        if (!checkTrashOnGround(element)) {
+                            // 如果没有拖到地面，返回原位
+                            gsap.to(element, {
+                                left: originalX,
+                                top: originalY,
+                                scale: 1,
+                                duration: 0.3,
+                                ease: "back.out(1.7)"
+                            });
+                        }
+                    }
+                }
+                
+                isDragging = false;
+            }
+        }
+        
+        // 检查是否拖到熊嘴
+        function checkCollision(leaf) {
+            if (gameState.isFull) return false;
+            
+            // 获取熊嘴的位置和尺寸
+            const mouthRect = bearMouth.getBoundingClientRect();
+            const leafRect = leaf.getBoundingClientRect();
+            
+            // 计算中心点
+            const mouthCenterX = mouthRect.left + mouthRect.width / 2;
+            const mouthCenterY = mouthRect.top + mouthRect.height / 2;
+            const leafCenterX = leafRect.left + leafRect.width / 2;
+            const leafCenterY = leafRect.top + leafRect.height / 2;
+            
+            // 计算距离
+            const distance = Math.sqrt(
+                Math.pow(mouthCenterX - leafCenterX, 2) + 
+                Math.pow(mouthCenterY - leafCenterY, 2)
+            );
+            
+            // 根据屏幕宽度调整碰撞阈值
+            const isMobile = window.innerWidth < 640;
+            const collisionThreshold = isMobile ? 25 : 30;
+            
+            // 如果距离小于阈值，认为碰撞
+            if (distance < collisionThreshold) {
+                // 播放吃树叶动画
+                eatLeaf(leaf);
+                return true;
+            }
+            
+            return false;
+        }
+        
+        // 吃树叶动画
+        function eatLeaf(leaf) {
+            // 移除拖拽功能
+            leaf.onmousedown = null;
+            leaf.ontouchstart = null;
+            
+            // 将树叶移动到熊嘴
+            gsap.to(leaf, {
+                left: bearMouth.offsetLeft - 10,
+                top: bearMouth.offsetTop - 10,
+                scale: 0.5,
+                duration: 0.3,
+                onComplete: () => {
+                    // 隐藏树叶
+                    leaf.style.display = 'none';
+                    
+                    // 增加饱腹度
+                    increaseHunger(10);
+                    
+                    // 熊嘴动画
+                    gsap.to(bearMouth, {
+                        scale: 1.5,
+                        duration: 0.2,
+                        yoyo: true,
+                        repeat: 1
+                    });
+                }
+            });
+        }
+        
+        // 增加饱腹度
+        function increaseHunger(amount) {
+            gameState.hunger = Math.min(gameState.hunger + amount, gameState.maxHunger);
+            updateHungerBar();
+            
+            // 检查是否吃饱
+            if (gameState.hunger >= gameState.maxHunger && !gameState.isFull) {
+                gameState.isFull = true;
+                showBearSpeech();
+            }
+        }
+        
+        // 更新饱腹度条
+        function updateHungerBar() {
+            const percentage = (gameState.hunger / gameState.maxHunger) * 100;
+            hungerBar.style.width = `${percentage}%`;
+            hungerText.textContent = `${Math.round(percentage)}%`;
+        }
+        
+        // 显示小熊对话
+        function showBearSpeech(text = "太棒了，我太爱吃金色树叶了！") {
+            bearSpeech.textContent = text;
+            bearSpeech.classList.remove('hidden');
+            
+            // 小熊动画
+            gsap.to(document.querySelector('#bear img'), {
+                y: -10,
+                duration: 0.5,
+                yoyo: true,
+                repeat: 3
+            });
+            
+            // 3秒后隐藏对话
+            setTimeout(() => {
+                bearSpeech.classList.add('hidden');
+            }, 3000);
+        }
+        
+        // 更新豆浆冷却进度条
+        function updateMilkCooldown() {
+            const currentTime = Date.now();
+            const elapsed = currentTime - gameState.lastMilkTime;
+            const remaining = Math.max(0, gameState.milkCooldown - elapsed);
+            const percentage = (remaining / gameState.milkCooldown) * 100;
+            
+            milkCooldownBar.style.width = `${percentage}%`;
+            
+            if (percentage <= 0) {
+                milkCooldownBarContainer.classList.add('hidden');
+                if (gameState.cooldownInterval) {
+                    clearInterval(gameState.cooldownInterval);
+                    gameState.cooldownInterval = null;
+                }
+            }
+        }
+        
+        // 豆浆机交互
+        function drinkSoybeanMilk() {
+            const currentTime = Date.now();
+            if (currentTime - gameState.lastMilkTime < gameState.milkCooldown) {
+                const milkSpeech = document.getElementById('milkSpeech');
+                milkSpeech.textContent = "豆浆需要一点时间准备...";
+                milkSpeech.classList.remove('hidden');
+                setTimeout(() => {
+                    milkSpeech.classList.add('hidden');
+                }, 2000);
+                return;
+            }
+            
+            const soybeanMilkMaker = document.getElementById('soybeanMilkMaker');
+            const milkSpeech = document.getElementById('milkSpeech');
+            
+            // 显示豆浆机对话
+            milkSpeech.classList.remove('hidden');
+            
+            // 豆浆机动画
+            gsap.to(soybeanMilkMaker.querySelector('img'), {
+                scale: 1.1,
+                duration: 0.3,
+                yoyo: true,
+                repeat: 1
+            });
+            
+            // 2秒后小熊喝豆浆
+            setTimeout(() => {
+                milkSpeech.classList.add('hidden');
+                
+                // 小熊喝豆浆动画
+                gsap.to(document.querySelector('#bear img'), {
+                    x: 20,
+                    duration: 0.5,
+                    onComplete: () => {
+                        // 小熊喝豆浆的动作
+                        gsap.to(document.querySelector('#bear img'), {
+                            x: 0,
+                            duration: 0.5,
+                            onComplete: () => {
+                                // 显示小熊满足的对话
+                                showBearSpeech("好满足，豆浆好温暖！");
+                                
+                                // 增加饱腹度
+                                increaseHunger(15);
+                                
+                                // 更新游戏状态
+                                gameState.lastMilkTime = Date.now();
+                                
+                                // 显示并启动冷却进度条
+                                milkCooldownBarContainer.classList.remove('hidden');
+                                milkCooldownBar.style.width = '100%';
+                                
+                                // 清除之前的定时器
+                                if (gameState.cooldownInterval) {
+                                    clearInterval(gameState.cooldownInterval);
+                                }
+                                
+                                // 设置新的定时器更新进度条
+                                gameState.cooldownInterval = setInterval(updateMilkCooldown, 100);
+                                updateMilkCooldown();
+                                
+                                // 在对话框中添加记录
+                                const dialogContent = document.getElementById('dialogContent');
+                                const dialogElement = document.createElement('p');
+                                dialogElement.className = 'text-text mt-2';
+                                dialogElement.textContent = `小熊：好满足，豆浆好温暖！`;
+                                dialogContent.appendChild(dialogElement);
+                                dialogContent.scrollTop = dialogContent.scrollHeight;
+                            }
+                        });
+                    }
+                });
+            }, 2000);
+        }
+        
+        // 创建纸巾垃圾
+        function createTrash() {
+            if (gameState.trashItems.length >= 5) {
+                alert('地上已经有太多垃圾了！请先清理一些。');
+                return;
+            }
+            
+            const trash = document.createElement('img');
+            trash.src = 'https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/fa96dc3f48ba414e9fb6b5a8469b9a30~tplv-a9rns2rl98-image.image?rcl=2025120913594127E84719D8B5E42A510B&rk3s=8e244e95&rrcfp=f06b921b&x-expires=1767851991&x-signature=%2F%2BDJMI7D4kOxgl1RWo2WKF3kPhQ%3D';
+            trash.alt = '纸巾垃圾';
+            trash.className = 'absolute draggable leaf-shadow z-5';
+            
+            // 设置大小
+            const isMobile = window.innerWidth < 640;
+            const trashSize = isMobile ? '20px' : '30px';
+            trash.style.width = trashSize;
+            trash.style.height = trashSize;
+            
+            // 随机位置（在地面区域）
+            const gameAreaRect = gameArea.getBoundingClientRect();
+            const groundY = gameAreaRect.height * 0.75; // 地面位置
+            const x = 50 + Math.random() * (gameAreaRect.width - 100);
+            const y = groundY + Math.random() * (gameAreaRect.height * 0.2 - 30);
+            
+            trash.style.left = `${x}px`;
+            trash.style.top = `${y}px`;
+            
+            // 随机旋转
+            const rotation = Math.random() * 360;
+            trash.style.transform = `rotate(${rotation}deg)`;
+            
+            // 添加拖拽功能
+            makeDraggable(trash);
+            
+            // 添加到游戏区域
+            gameArea.appendChild(trash);
+            gameState.trashItems.push(trash);
+            
+            // 在对话框中添加记录
+            const dialogContent = document.getElementById('dialogContent');
+            const dialogElement = document.createElement('p');
+            dialogElement.className = 'text-text mt-2 text-red-500';
+            dialogElement.textContent = `玩家：扔了一张纸巾在地上。`;
+            dialogContent.appendChild(dialogElement);
+            dialogContent.scrollTop = dialogContent.scrollHeight;
+            
+            // 延迟一下让小熊来清理
+            setTimeout(() => {
+                cleanTrash(trash);
+            }, 1000);
+        }
+        
+        // 小熊清理垃圾
+        function cleanTrash(trash) {
+            if (gameState.isCleaning) return;
+            
+            gameState.isCleaning = true;
+            
+            // 获取垃圾位置
+            const trashRect = trash.getBoundingClientRect();
+            const gameAreaRect = gameArea.getBoundingClientRect();
+            const trashX = trashRect.left - gameAreaRect.left + trashRect.width / 2;
+            
+            // 获取小熊位置
+            const bearRect = bearElement.getBoundingClientRect();
+            const bearX = bearRect.left - gameAreaRect.left + bearRect.width / 2;
+            
+            // 小熊移动到垃圾位置
+            gsap.to(bearElement, {
+                left: `${trashX - bearRect.width / 2}px`,
+                duration: 1,
+                onComplete: () => {
+                    // 小熊吃垃圾动画
+                    gsap.to(bearMouth, {
+                        scale: 1.8,
+                        duration: 0.3,
+                        onComplete: () => {
+                            // 隐藏垃圾
+                            trash.style.display = 'none';
+                            
+                            // 从小熊的垃圾列表中移除
+                            const index = gameState.trashItems.indexOf(trash);
+                            if (index > -1) {
+                                gameState.trashItems.splice(index, 1);
+                            }
+                            
+                            // 熊嘴恢复并添加满足表情
+                            gsap.to(bearMouth, {
+                                scale: 1,
+                                duration: 0.3,
+                                onComplete: () => {
+                                    // 添加满足表情动画
+                                    const bearImage = document.querySelector('#bear img');
+                                    gsap.to(bearImage, {
+                                        scale: 1.1,
+                                        duration: 0.5,
+                                        yoyo: true,
+                                        repeat: 1,
+                                        ease: "back.out(1.7)"
+                                    });
+                                }
+                            });
+                            
+                            // 显示小熊满足的对话
+                            const trashDialogue = "我最爱吃垃圾了，没有人能在我的领土里丢一片垃圾！";
+                            showBearSpeech(trashDialogue);
+                            
+                            // 在对话框中添加记录
+                            const dialogContent = document.getElementById('dialogContent');
+                            const dialogElement = document.createElement('p');
+                            dialogElement.className = 'text-text mt-2';
+                            dialogElement.textContent = `小熊：${trashDialogue}`;
+                            dialogContent.appendChild(dialogElement);
+                            dialogContent.scrollTop = dialogContent.scrollHeight;
+                            
+                            // 增加一点饱腹度
+                            increaseHunger(5);
+                            
+                            // 小熊回到原位
+                            setTimeout(() => {
+                                gsap.to(bearElement, {
+                                    left: '30%',
+                                    duration: 1,
+                                    onComplete: () => {
+                                        gameState.isCleaning = false;
+                                        
+                                        // 检查是否还有其他垃圾需要清理
+                                        if (gameState.trashItems.length > 0) {
+                                            const nextTrash = gameState.trashItems[0];
+                                            // 延迟一下让小熊继续清理下一个垃圾
+                                            setTimeout(() => {
+                                                cleanTrash(nextTrash);
+                                            }, 1000);
+                                        }
+                                    }
+                                });
+                            }, 2000);
+                        }
+                    });
+                }
+            });
+        }
+        
+        // 检查垃圾是否被拖到地面
+        function checkTrashOnGround(trash) {
+            const trashRect = trash.getBoundingClientRect();
+            const gameAreaRect = gameArea.getBoundingClientRect();
+            
+            // 检查是否在地面区域（底部25%）
+            if (trashRect.top > gameAreaRect.height * 0.75) {
+                // 延迟一下让小熊来清理
+                setTimeout(() => {
+                    cleanTrash(trash);
+                }, 1000);
+                return true;
+            }
+            
+            return false;
+        }
+        
+        // 重新开始游戏
+        function restartGame() {
+            gameState.hunger = 0;
+            gameState.isFull = false;
+            gameState.lastMilkTime = 0;
+            gameState.clickCount = 0;
+            gameState.isCleaning = false;
+            
+            // 清除所有垃圾
+            gameState.trashItems.forEach(trash => {
+                if (trash.parentNode) {
+                    trash.parentNode.removeChild(trash);
+                }
+            });
+            gameState.trashItems = [];
+            
+            updateHungerBar();
+            bearSpeech.classList.add('hidden');
+            document.getElementById('milkSpeech').classList.add('hidden');
+            milkCooldownBarContainer.classList.add('hidden');
+            
+            // 清除冷却定时器
+            if (gameState.cooldownInterval) {
+                clearInterval(gameState.cooldownInterval);
+                gameState.cooldownInterval = null;
+            }
+            
+            // 确保小熊回到原位
+            gsap.to(bearElement, {
+                left: '30%',
+                duration: 0.5
+            });
+            
+            createLeaves();
+        }
+        
+        // 小熊点击交互
+        function setupBearClick() {
+            bearElement.addEventListener('click', () => {
+                gameState.clickCount++;
+                
+                // 随机选择对话内容
+                const randomDialogue = bearDialogues[Math.floor(Math.random() * bearDialogues.length)];
+                showBearSpeech(randomDialogue);
+                
+                // 在对话框中添加记录
+                const dialogContent = document.getElementById('dialogContent');
+                const dialogElement = document.createElement('p');
+                dialogElement.className = 'text-text mt-2';
+                dialogElement.textContent = `小熊：${randomDialogue}`;
+                dialogContent.appendChild(dialogElement);
+                dialogContent.scrollTop = dialogContent.scrollHeight;
+            });
+        }
+        
+        // 初始化游戏
+        function initGame() {
+            // 根据屏幕宽度调整树叶数量
+            const isMobile = window.innerWidth < 640;
+            createLeaves(isMobile ? 8 : 10);
+            
+            // 绑定重新开始按钮
+            restartButton.addEventListener('click', restartGame);
+            
+            // 添加窗口大小变化监听，重新调整布局
+            window.addEventListener('resize', () => {
+                if (!gameState.isFull) {
+                    const isMobile = window.innerWidth < 640;
+                    // 重新创建树叶以适应新的屏幕尺寸
+                    createLeaves(isMobile ? 8 : 10);
+                }
+            });
+            
+            // 红豆对话动画
+            gsap.to(document.querySelector('#redBean img'), {
+                y: -5,
+                duration: 1,
+                yoyo: true,
+                repeat: -1
+            });
+            
+            // 设置小熊点击交互
+            setupBearClick();
+            
+            // 金树叶轻微摆动
+            setInterval(() => {
+                gameState.leaves.forEach(leaf => {
+                    if (leaf.style.display !== 'none') {
+                        const randomRotation = (Math.random() - 0.5) * 10;
+                        gsap.to(leaf, {
+                            rotation: `+=${randomRotation}`,
+                            duration: 0.5
+                        });
+                    }
+                });
+            }, 2000);
+        }
+        
+        // 初始化UI交互
+        function initUI() {
+            // 豆浆机交互
+            const soybeanMilkMaker = document.getElementById('soybeanMilkMaker');
+            soybeanMilkMaker.addEventListener('click', drinkSoybeanMilk);
+            
+            // 扔垃圾按钮
+            const navTrash = document.getElementById('navTrash');
+            navTrash.addEventListener('click', createTrash);
+            
+            // 对话框功能
+            const dialogBox = document.getElementById('dialogBox');
+            const closeDialog = document.getElementById('closeDialog');
+            const addDialog = document.getElementById('addDialog');
+            const dialogContent = document.getElementById('dialogContent');
+            
+            // 关闭对话框
+            closeDialog.addEventListener('click', () => {
+                dialogBox.classList.add('hidden');
+            });
+            
+            // 添加对话
+            addDialog.addEventListener('click', () => {
+                const newDialog = prompt('请输入新的对话内容：');
+                if (newDialog && newDialog.trim() !== '') {
+                    const speaker = Math.random() > 0.5 ? '红豆' : '小熊';
+                    const dialogElement = document.createElement('p');
+                    dialogElement.className = 'text-text mt-2';
+                    dialogElement.textContent = `${speaker}：${newDialog}`;
+                    dialogContent.appendChild(dialogElement);
+                    dialogContent.scrollTop = dialogContent.scrollHeight;
+                }
+            });
+            
+            // 导航栏功能
+            const navRestart = document.getElementById('navRestart');
+            const navHelp = document.getElementById('navHelp');
+            const navSettings = document.getElementById('navSettings');
+            const navAbout = document.getElementById('navAbout');
+            
+            // 重新开始
+            navRestart.addEventListener('click', restartGame);
+            
+            // 帮助弹窗
+            const helpModal = document.getElementById('helpModal');
+            const closeHelp = document.getElementById('closeHelp');
+            const gotIt = document.getElementById('gotIt');
+            
+            navHelp.addEventListener('click', () => {
+                helpModal.classList.remove('hidden');
+            });
+            
+            closeHelp.addEventListener('click', () => {
+                helpModal.classList.add('hidden');
+            });
+            
+            gotIt.addEventListener('click', () => {
+                helpModal.classList.add('hidden');
+            });
+            
+            // 设置弹窗
+            const settingsModal = document.getElementById('settingsModal');
+            const closeSettings = document.getElementById('closeSettings');
+            const saveSettings = document.getElementById('saveSettings');
+            const soundVolume = document.getElementById('soundVolume');
+            const animationSpeed = document.getElementById('animationSpeed');
+            const showSpeech = document.getElementById('showSpeech');
+            
+            navSettings.addEventListener('click', () => {
+                settingsModal.classList.remove('hidden');
+            });
+            
+            closeSettings.addEventListener('click', () => {
+                settingsModal.classList.add('hidden');
+            });
+            
+            saveSettings.addEventListener('click', () => {
+                // 保存设置
+                const settings = {
+                    soundVolume: soundVolume.value,
+                    animationSpeed: animationSpeed.value,
+                    showSpeech: showSpeech.checked
+                };
+                
+                // 应用动画速度设置
+                applyAnimationSpeed(settings.animationSpeed);
+                
+                // 应用对话气泡设置
+                applySpeechBubbleSetting(settings.showSpeech);
+                
+                // 保存到本地存储
+                localStorage.setItem('bearGameSettings', JSON.stringify(settings));
+                
+                settingsModal.classList.add('hidden');
+                
+                // 显示保存成功提示
+                alert('设置已保存！');
+            });
+            
+            // 关于弹窗
+            const aboutModal = document.getElementById('aboutModal');
+            const closeAbout = document.getElementById('closeAbout');
+            const closeAboutBtn = document.getElementById('closeAboutBtn');
+            
+            navAbout.addEventListener('click', () => {
+                aboutModal.classList.remove('hidden');
+            });
+            
+            closeAbout.addEventListener('click', () => {
+                aboutModal.classList.add('hidden');
+            });
+            
+            closeAboutBtn.addEventListener('click', () => {
+                aboutModal.classList.add('hidden');
+            });
+            
+            // 加载保存的设置
+            loadSettings();
+        }
+        
+        // 加载保存的设置
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('bearGameSettings');
+            if (savedSettings) {
+                const settings = JSON.parse(savedSettings);
+                
+                // 设置UI元素
+                document.getElementById('soundVolume').value = settings.soundVolume || 50;
+                document.getElementById('animationSpeed').value = settings.animationSpeed || 'normal';
+                document.getElementById('showSpeech').checked = settings.showSpeech !== undefined ? settings.showSpeech : true;
+                
+                // 应用设置
+                applyAnimationSpeed(settings.animationSpeed || 'normal');
+                applySpeechBubbleSetting(settings.showSpeech !== undefined ? settings.showSpeech : true);
+            }
+        }
+        
+        // 应用动画速度设置
+        function applyAnimationSpeed(speed) {
+            let durationMultiplier = 1;
+            
+            switch (speed) {
+                case 'slow':
+                    durationMultiplier = 1.5;
+                    break;
+                case 'fast':
+                    durationMultiplier = 0.7;
+                    break;
+                default: // normal
+                    durationMultiplier = 1;
+            }
+            
+            // 更新GSAP全局时间缩放
+            gsap.globalTimeline.timeScale(1 / durationMultiplier);
+        }
+        
+        // 应用对话气泡设置
+        function applySpeechBubbleSetting(show) {
+            const redBeanSpeech = document.getElementById('redBeanSpeech');
+            const bearSpeech = document.getElementById('bearSpeech');
+            
+            if (show) {
+                redBeanSpeech.classList.remove('hidden');
+            } else {
+                redBeanSpeech.classList.add('hidden');
+                bearSpeech.classList.add('hidden');
+            }
+        }
+        
+        // 启动游戏
+        window.addEventListener('load', () => {
+            initGame();
+            initUI();
+        });
+    </script>
+
+</body></html>
